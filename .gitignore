@@ -1,0 +1,30 @@
+# Secrets / local config
+.env
+local.settings.json
+
+# Virtual environments
+.venv/
+venv/
+venv_win/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Azure Functions
+.python_packages/
+bin/
+obj/
+
+# Editor / OS
+.DS_Store
+.vscode/

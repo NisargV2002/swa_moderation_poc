@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -)",
+      "Bash(python3 -c ' *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(rm -f /Users/nisargvaishnav/.claude/projects/-Users-nisargvaishnav-Desktop-swa-moderation-poc/f120ec22-8a00-4a10-8c76-963ae0c82901/tool-results/bp87ol2uo.txt)",
+      "Bash(rm -f /Users/nisargvaishnav/.claude/projects/-Users-nisargvaishnav-Desktop-swa-moderation-poc/f120ec22-8a00-4a10-8c76-963ae0c82901/tool-results/bhlv88pe3.txt)",
+      "Bash(cat /tmp/probe_final.txt 2>/dev/null; pgrep -f probe_harness >/dev/null && echo \"[ALIVE]\" || echo \"[DEAD]\")",
+      "Bash(git --version)"
+    ]
+  }
+}

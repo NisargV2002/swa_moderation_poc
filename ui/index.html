@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SWA AutoMod | Moderation Dashboard</title>
+
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --panel: #ffffff;
+      --border: #e5e7eb;
+      --text: #111827;
+      --muted: #6b7280;
+      --blue: #2563eb;
+      --green: #16a34a;
+      --orange: #ea580c;
+      --yellow: #ca8a04;
+      --red: #dc2626;
+      --purple: #7c3aed;
+      --shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      background: #0f172a;
+      color: white;
+      padding: 24px;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .logo span { color: #60a5fa; }
+
+    .sidebar-subtitle {
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 32px;
+    }
+
+    .nav-item {
+      padding: 12px 14px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      background: rgba(255,255,255,0.08);
+      color: #e5e7eb;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .nav-item:hover {
+      background: rgba(96,165,250,0.22);
+      transform: translateX(3px);
+    }
+
+    .main { padding: 28px; min-width: 0; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .page-title h1 {
+      margin: 0;
+      font-size: 30px;
+    }
+
+    .page-title p {
+      margin: 6px 0 0;
+      color: var(--muted);
+    }
+
+    .status-chip {
+      background: #dcfce7;
+      color: #166534;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      margin-bottom: 22px;
+      scroll-margin-top: 24px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    select {
+      width: 100%;
+      margin-top: 8px;
+      padding: 13px 14px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      font-size: 15px;
+      background: white;
+    }
+
+    button {
+      padding: 13px 18px;
+      border-radius: 12px;
+      border: none;
+      background: var(--blue);
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+    }
+
+    button:hover { background: #1d4ed8; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .metric-card {
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 18px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .outcome-hero {
+      border-radius: 20px;
+      padding: 26px;
+      color: white;
+      margin-bottom: 22px;
+      box-shadow: var(--shadow);
+      scroll-margin-top: 24px;
+    }
+
+    .PASS { background: linear-gradient(135deg, #16a34a, #15803d); }
+    .REVIEW { background: linear-gradient(135deg, #ca8a04, #a16207); }
+    .REQUEST_AMENDMENT { background: linear-gradient(135deg, #ea580c, #c2410c); }
+    .ESCALATE, .REJECT_RECOMMENDED { background: linear-gradient(135deg, #dc2626, #991b1b); }
+    .UNKNOWN { background: linear-gradient(135deg, #64748b, #334155); }
+
+    .outcome-hero h2 {
+      margin: 0 0 8px;
+      font-size: 34px;
+    }
+
+    .outcome-hero p {
+      margin: 5px 0;
+      opacity: .96;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 21px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      margin: 4px 6px 4px 0;
+      background: #eef2ff;
+      color: #3730a3;
+      white-space: nowrap;
+    }
+
+    .pill-green { background: #dcfce7; color: #166534; }
+    .pill-orange { background: #ffedd5; color: #9a3412; }
+    .pill-red { background: #fee2e2; color: #991b1b; }
+    .pill-blue { background: #dbeafe; color: #1e40af; }
+    .pill-purple { background: #ede9fe; color: #5b21b6; }
+    .pill-gray { background: #e5e7eb; color: #374151; }
+
+    .claim-card, .evidence-card {
+      background: #fbfdff;
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--orange);
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 14px;
+    }
+
+    .claim-card.passive {
+      border-left-color: var(--green);
+    }
+
+    .claim-text {
+      font-size: 17px;
+      font-weight: 800;
+      margin: 12px 0;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px dashed #e5e7eb;
+    }
+
+    .field-row:last-child { border-bottom: none; }
+
+    .field-key {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .field-value {
+      font-size: 14px;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    details {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-top: 12px;
+      scroll-margin-top: 24px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 800;
+      color: #111827;
+    }
+
+    pre {
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 16px;
+      border-radius: 14px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .module-row {
+      display: grid;
+      grid-template-columns: 90px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid #eef2f7;
+    }
+
+    .module-row:last-child { border-bottom: none; }
+
+    .muted { color: var(--muted); }
+
+    .empty {
+      padding: 16px;
+      background: #f9fafb;
+      border-radius: 12px;
+      color: var(--muted);
+      margin-top: 12px;
+    }
+
+    .loader {
+      padding: 22px;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    /* ── Page switching ────────────────────────────────────────────────── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .nav-item.active {
+      background: rgba(96,165,250,0.30);
+      color: white;
+    }
+
+    /* ── Project checkbox list ──────────────────────────────────────────── */
+    .project-list {
+      max-height: 210px;
+      overflow-y: auto;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      margin-top: 8px;
+      background: white;
+    }
+
+    .project-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      transition: background 0.1s;
+      user-select: none;
+    }
+    .project-row:last-child { border-bottom: none; }
+    .project-row:hover { background: #f0f4ff; }
+    .project-row.selected { background: #eff6ff; }
+    .project-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      accent-color: var(--blue);
+      cursor: pointer;
+    }
+    .project-row-content { flex: 1; min-width: 0; }
+    .project-row-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .project-row-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .select-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      align-items: center;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: white;
+      color: var(--text);
+      cursor: pointer;
+      box-shadow: none;
+    }
+    .btn-sm:hover { background: #f3f4f6; }
+
+    .selected-count {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    /* ── Batch progress panel ───────────────────────────────────────────── */
+    .batch-item {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .batch-item:last-child { border-bottom: none; }
+    .batch-icon { font-size: 16px; text-align: center; }
+
+    /* ── Toolbar inner containment ──────────────────────────────────────── */
+    .toolbar > div { min-width: 0; }
+
+    /* ── History table ──────────────────────────────────────────────────── */
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      table-layout: fixed;
+    }
+    .history-table th {
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--muted);
+      border-bottom: 2px solid var(--border);
+      background: #f9fafb;
+      white-space: nowrap;
+    }
+    .history-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .history-table tr:last-child td { border-bottom: none; }
+    .history-table tr:hover td { background: #f9fafb; }
+    .history-row { cursor: pointer; }
+    .history-row:hover td { background: #f0f4ff !important; }
+    .history-chevron { text-align: center; font-size: 12px; color: var(--muted); }
+    .history-detail-row > td {
+      padding: 0 !important;
+      border-bottom: 2px solid var(--border) !important;
+      white-space: normal !important;
+      overflow: visible !important;
+    }
+    .history-detail-content {
+      padding: 16px 20px 20px;
+      background: #f9fafb;
+    }
+
+    /* ── Final Decision collapsible panel ─────────────────────────────── */
+    details.decision-panel > summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 2px 0;
+    }
+    details.decision-panel > summary::-webkit-details-marker { display: none; }
+    details.decision-panel > summary .collapse-hint {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    details.decision-panel > summary h2 { margin: 0; font-size: 21px; }
+
+    /* ── Violation summary list ────────────────────────────────────────── */
+    .violation-list { margin-top: 14px; }
+    .violation-item {
+      background: #fff5f5;
+      border: 1px solid #fecaca;
+      border-left: 4px solid var(--red);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+    .violation-item.sev-medium {
+      background: #fffbeb;
+      border-color: #fde68a;
+      border-left-color: var(--yellow);
+    }
+    .violation-item.sev-low {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      border-left-color: var(--green);
+    }
+    .violation-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .violation-code { font-weight: 800; font-size: 14px; }
+    .violation-reason { font-size: 14px; line-height: 1.55; color: var(--text); }
+
+    /* ── Policy expandable panels ──────────────────────────────────────── */
+    details.policy-panel {
+      padding: 18px 22px;
+    }
+    details.policy-panel > summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    details.policy-panel > summary::-webkit-details-marker { display: none; }
+    details.policy-panel > summary .chevron {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 5px;
+      flex-shrink: 0;
+      transition: transform 0.15s;
+    }
+    details.policy-panel[open] > summary .chevron { transform: rotate(90deg); }
+    .policy-summary-body { flex: 1; min-width: 0; }
+    .policy-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .policy-code-label { font-size: 17px; font-weight: 800; }
+    .policy-name-label { font-size: 13px; color: var(--muted); margin-top: 3px; }
+    details.policy-panel.policy-triggered {
+      border-left: 4px solid var(--red);
+    }
+    details.policy-panel.policy-clean {
+      border-left: 4px solid var(--green);
+      opacity: 0.82;
+    }
+    details.policy-panel.policy-triggered > summary .policy-code-label { color: var(--red); }
+    details.policy-panel.policy-clean > summary .policy-code-label { color: var(--green); }
+    .policy-decision-note {
+      margin: 14px 0 0;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+
+    /* ── Accuracy bar ─────────────────────────────────────────────────── */
+    .acc-bar-wrap {
+      background: var(--panel);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    .acc-header {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .acc-pct {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .acc-counts {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .acc-track {
+      height: 10px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .acc-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+    .acc-policies {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .acc-policy-chip {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    @media (max-width: 1000px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .toolbar { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 650px) {
+      .summary-grid { grid-template-columns: 1fr; }
+      .field-row { grid-template-columns: 1fr; }
+      .module-row { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="logo">SWA <span>AutoMod</span></div>
+      <div class="sidebar-subtitle">
+        Intelligent moderation workflow for Sustainable World Alliance project submissions.
+      </div>
+
+      <div class="nav-item active" id="nav-dashboard" onclick="showView('dashboard')">Moderation Dashboard</div>
+      <div class="nav-item" id="nav-history" onclick="showView('history')">Run History</div>
+      <div style="margin-top:24px; border-top:1px solid rgba(255,255,255,0.12); padding-top:16px;">
+        <div class="nav-item" onclick="scrollToSection('finalSection')">&#8594; Final Decision</div>
+        <div class="nav-item" onclick="scrollToSection('policySection')">&#8594; Policy Results</div>
+        <div class="nav-item" onclick="scrollToSection('moduleSection')">&#8594; Module Audit Trail</div>
+      </div>
+    </aside>
+
+    <main class="main">
+
+      <!-- ── Dashboard view ─────────────────────────────────────────── -->
+      <div id="dashboardView" class="view active">
+        <div class="topbar">
+          <div class="page-title">
+            <h1>Project Moderation Dashboard</h1>
+            <p>Select one or more projects and run the moderation pipeline sequentially.</p>
+          </div>
+          <div class="status-chip">Backend Connected</div>
+        </div>
+
+        <div class="panel" id="dashboardSection">
+          <div class="toolbar">
+            <div>
+              <label>Select Projects <span id="selectedCount" class="selected-count"></span></label>
+              <div id="projectList" class="project-list"></div>
+              <div class="select-controls">
+                <button class="btn-sm" onclick="selectAll()">Select All</button>
+                <button class="btn-sm" onclick="selectNone()">Clear</button>
+              </div>
+            </div>
+            <button onclick="runBatch()">Run Moderation</button>
+          </div>
+        </div>
+
+        <div id="accuracyBar" style="display:none;"></div>
+        <div id="batchProgress"></div>
+        <div id="projectDetails"></div>
+        <div id="result"></div>
+      </div>
+
+      <!-- ── History view ────────────────────────────────────────────── -->
+      <div id="historyView" class="view">
+        <div class="topbar">
+          <div class="page-title">
+            <h1>Moderation Run History</h1>
+            <p>All stored moderation runs, newest first.</p>
+          </div>
+          <button onclick="loadHistory()" style="padding:10px 16px; font-size:14px;">Refresh</button>
+        </div>
+        <div id="historyContent">
+          <div class="panel loader">Loading history...</div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    // ── Accuracy tracker ──────────────────────────────────────────────────
+    // Maps projectId → { expected: "ESCALATE", actual: "ESCALATE", correct: true }
+    const accuracyMap   = {};
+    // Maps projectId → expectedOutcome (populated when project list loads)
+    const expectedMap   = {};
+
+    // Normalise both pipeline output ("Needs-Review") and test-suite labels
+    // ("NEEDS_REVIEW") to a single canonical uppercase token for comparison.
+    function normaliseOutcome(s) {
+      if (!s) return '';
+      const n = s.toUpperCase().replace(/-/g, '_');
+      const aliases = {
+        REVIEW:             'NEEDS_REVIEW',
+        REQUEST_AMENDMENT:  'NEEDS_REVIEW',
+        REJECT_RECOMMENDED: 'QUARANTINE',
+        LAW_ENFORCEMENT:    'QUARANTINE',
+      };
+      return aliases[n] || n;
+    }
+
+    function recordResult(projectId, expected, actual) {
+      const exp = normaliseOutcome(expected);
+      const act = normaliseOutcome(actual);
+      accuracyMap[projectId] = { expected: exp, actual: act, correct: exp === act };
+      renderAccuracyBar();
+    }
+
+    function renderAccuracyBar() {
+      const bar     = document.getElementById('accuracyBar');
+      const entries = Object.values(accuracyMap);
+      if (!entries.length) { bar.style.display = 'none'; return; }
+
+      const total   = entries.length;
+      const correct = entries.filter(e => e.correct).length;
+      const pct     = total ? Math.round(100 * correct / total) : 0;
+
+      const colour =
+        pct >= 80 ? '#16a34a' :
+        pct >= 50 ? '#ea580c' : '#dc2626';
+
+      // Per-policy breakdown
+      const byPolicy = {};
+      for (const [id, r] of Object.entries(accuracyMap)) {
+        // Derive policy from the project row label stored in expectedMap
+        const policyCode = (policyFromId(Number(id)) || '?');
+        if (!byPolicy[policyCode]) byPolicy[policyCode] = { correct: 0, total: 0 };
+        byPolicy[policyCode].total++;
+        if (r.correct) byPolicy[policyCode].correct++;
+      }
+
+      const chips = Object.entries(byPolicy).sort().map(([pc, v]) => {
+        const p = v.total ? Math.round(100 * v.correct / v.total) : 0;
+        const c = p >= 80 ? '#16a34a' : p >= 50 ? '#ea580c' : '#dc2626';
+        return `<span class="acc-policy-chip" style="border-color:${c}; color:${c};">
+                  ${safe(pc)}&nbsp; ${v.correct}/${v.total} &nbsp;${p}%
+                </span>`;
+      }).join('');
+
+      bar.style.display = '';
+      bar.innerHTML = `
+        <div class="acc-bar-wrap">
+          <div class="acc-header">
+            <span class="acc-pct" style="color:${colour};">${pct}%</span>
+            <span class="acc-counts">
+              <strong style="color:${colour};">${correct} correct</strong>
+              &nbsp;/&nbsp; ${total} run
+              &nbsp;&bull;&nbsp; ${total - correct} incorrect
+            </span>
+            <span style="font-size:12px; color:var(--muted); margin-left:auto;">
+              Accuracy tracker resets on page refresh
+            </span>
+          </div>
+          <div class="acc-track">
+            <div class="acc-fill" style="width:${pct}%; background:${colour};"></div>
+          </div>
+          <div class="acc-policies">${chips}</div>
+        </div>`;
+    }
+
+    // Return the PolicyCode for a given project id by looking at the list row
+    function policyFromId(id) {
+      const row = document.querySelector(`#projectList [data-id="${id}"]`);
+      if (!row) return null;
+      // projectStatus is stored as a data attribute when the row was built
+      return row.dataset.policy || null;
+    }
+
+
+    // ── View switching ────────────────────────────────────────────────────
+    function showView(view) {
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.querySelectorAll(".nav-item[id^='nav-']").forEach(n => n.classList.remove("active"));
+      document.getElementById(view + "View").classList.add("active");
+      document.getElementById("nav-" + view).classList.add("active");
+      if (view === "history") loadHistory();
+    }
+
+    // ── Project checkbox list helpers ────────────────────────────────────
+    function getSelectedIds() {
+      return Array.from(
+        document.querySelectorAll("#projectList input[type='checkbox']:checked")
+      ).map(cb => cb.value);
+    }
+
+    function updateCount() {
+      const n = getSelectedIds().length;
+      document.getElementById("selectedCount").textContent =
+        n > 0 ? `(${n} selected)` : "";
+    }
+
+    function selectAll() {
+      document.querySelectorAll("#projectList .project-row").forEach(row => {
+        row.querySelector("input[type='checkbox']").checked = true;
+        row.classList.add("selected");
+      });
+      updateCount();
+      document.getElementById("projectDetails").innerHTML = "";
+    }
+
+    function selectNone() {
+      document.querySelectorAll("#projectList .project-row").forEach(row => {
+        row.querySelector("input[type='checkbox']").checked = false;
+        row.classList.remove("selected");
+      });
+      updateCount();
+      document.getElementById("projectDetails").innerHTML = "";
+    }
+
+    async function loadProjects() {
+      const res      = await fetch(`${API_BASE}/projects`);
+      const projects = await res.json();
+      const list     = document.getElementById("projectList");
+      list.innerHTML = "";
+
+      projects.forEach(p => {
+        const expColor =
+          p.expectedOutcome === "PASS"
+            ? "#16a34a"
+            : ["ESCALATE","QUARANTINE","LAW_ENFORCEMENT"].includes(p.expectedOutcome)
+              ? "#dc2626"
+              : p.expectedOutcome === "NEEDS_REVIEW"
+                ? "#ea580c"
+                : "#6b7280";
+
+        const row = document.createElement("label");
+        row.className     = "project-row";
+        row.dataset.id    = p.id;
+        row.dataset.label  = `${p.id} — ${p.projectName}`;
+        row.dataset.policy = p.projectStatus || '';
+        expectedMap[p.id]  = p.expectedOutcome;
+        row.innerHTML = `
+          <input type="checkbox" value="${p.id}">
+          <div class="project-row-content">
+            <div class="project-row-name">${safe(String(p.id))} &mdash; ${safe(p.projectName)}</div>
+            <div class="project-row-meta">
+              ${safe(p.countryName || "")}
+              &bull; Expected: <span style="color:${expColor}; font-weight:700;">${safe(p.expectedOutcome)}</span>
+            </div>
+          </div>`;
+
+        row.querySelector("input").addEventListener("change", function () {
+          row.classList.toggle("selected", this.checked);
+          updateCount();
+          const ids = getSelectedIds();
+          if (ids.length === 1) loadProjectDetails(ids[0]);
+          else document.getElementById("projectDetails").innerHTML = "";
+        });
+
+        list.appendChild(row);
+      });
+
+      updateCount();
+    }
+
+    async function loadProjectDetails(id) {
+      const res = await fetch(`${API_BASE}/projects/${id}`);
+      const p   = await res.json();
+
+      document.getElementById("projectDetails").innerHTML = `
+        <div class="panel">
+          <div class="section-title">
+            <h2>Project Snapshot</h2>
+            <span class="pill pill-blue">${safe(p.ProjectStatus)}</span>
+          </div>
+          <div class="summary-grid">
+            ${metric("Project",  p.ProjectName)}
+            ${metric("Expected", p.ExpectedPolicyOutcome)}
+            ${metric("Country",  p.CountryName)}
+            ${metric("Language", p.LanguageCode || "Detected later")}
+          </div>
+          <details open>
+            <summary>Submission Text</summary>
+            ${row("Project Description",  p.ProjectDescription)}
+            ${row("Project Goal",         p.ProjectGoal)}
+            ${row("Resource Description", p.ResourceDescription)}
+            ${row("Expected Notes",       p.ExpectedNotes)}
+          </details>
+        </div>`;
+    }
+
+    // ── Sequential batch moderation ──────────────────────────────────────
+    async function runBatch() {
+      const ids = getSelectedIds();
+      if (!ids.length) { alert("Please select at least one project."); return; }
+
+      document.getElementById("result").innerHTML = "";
+      document.getElementById("projectDetails").innerHTML = "";
+
+      const items = ids.map(id => ({
+        id,
+        label: document.querySelector(`#projectList [data-id="${id}"]`)?.dataset.label || String(id),
+        status: "pending",
+        outcome: null
+      }));
+
+      const renderProgress = () => {
+        const done = items.filter(i => i.status === "done").length;
+        document.getElementById("batchProgress").innerHTML = `
+          <div class="panel">
+            <div class="section-title">
+              <h2>Batch Progress</h2>
+              <span class="pill pill-blue">${done} / ${items.length} complete</span>
+            </div>
+            ${items.map(item => {
+              const icon      = item.status === "done" ? "✓" :
+                                item.status === "running" ? "⟳" : "○";
+              const pillClass = item.status === "done"    ? "pill-green" :
+                                item.status === "running" ? "pill-blue"  : "pill-gray";
+              const label     = item.status === "done" && item.outcome
+                                  ? item.outcome : item.status.toUpperCase();
+              return `<div class="batch-item">
+                <span class="batch-icon">${icon}</span>
+                <span>${safe(item.label)}</span>
+                <span class="pill ${pillClass}">${safe(label)}</span>
+              </div>`;
+            }).join("")}
+          </div>`;
+      };
+
+      renderProgress();
+      const allResults = [];
+
+      for (const item of items) {
+        item.status = "running";
+        renderProgress();
+        try {
+          const res  = await fetch(`${API_BASE}/moderate/${item.id}`, { method: "POST" });
+          const data = await res.json();
+          item.status  = "done";
+          item.outcome = data.finalModerationResult?.final_outcome
+                         || (data.status === "FAILED" ? "FAILED" : "DONE");
+          allResults.push(data);
+          // ── accuracy tracking ────────────────────────────────────────
+          if (data.status === "COMPLETED") {
+            const exp = expectedMap[item.id];
+            const act = data.finalModerationResult?.final_outcome || data.finalModerationResult?.final_suggested_action;
+            if (exp && act) recordResult(item.id, exp, act);
+          }
+        } catch (err) {
+          item.status  = "done";
+          item.outcome = "ERROR";
+          allResults.push({ status: "FAILED", message: err.message,
+                            projectId: item.id, projectName: item.label });
+        }
+        renderProgress();
+      }
+
+      // Render all results sequentially
+      document.getElementById("result").innerHTML = allResults.map((data, idx) => {
+        const divider = idx > 0
+          ? `<hr style="margin:32px 0;border:none;border-top:2px dashed var(--border);">`
+          : "";
+        if (data.status !== "COMPLETED") {
+          return `${divider}<div class="panel">
+            <span class="pill pill-red">Failed — Project ${safe(data.projectId)}</span>
+            <p>${safe(data.message)}</p></div>`;
+        }
+        const final = data.finalModerationResult || {};
+        return `${divider}
+          <div style="margin-bottom:4px;">
+            <p style="padding:0 4px;margin:0 0 10px;font-weight:700;color:var(--muted);font-size:13px;">
+              Project ${safe(data.projectId)} — ${safe(data.projectName)}
+            </p>
+            ${renderHero(final, data)}
+            ${renderDecisionCards(final, data)}
+            ${(data.policyResults || []).map((p, i) => renderPolicy(p, i)).join("")}
+            ${renderRawJson(data)}
+          </div>`;
+      }).join("");
+    }
+
+    function renderResult(data) {
+      if (data.status !== "COMPLETED") {
+        document.getElementById("result").innerHTML = `
+          <div class="panel">
+            <span class="pill pill-red">Failed</span>
+            <p>${safe(data.message)}</p>
+          </div>
+          ${renderRawJson(data)}
+        `;
+        return;
+      }
+
+      const final = data.finalModerationResult || {};
+      const policies = data.policyResults || [];
+
+      document.getElementById("result").innerHTML = `
+        ${renderHero(final, data)}
+        ${renderDecisionCards(final, data)}
+        ${policies.map((p, index) => renderPolicy(p, index)).join("")}
+        ${renderRawJson(data)}
+      `;
+    }
+
+    function renderHero(final, data) {
+      const outcome   = final.final_outcome || "UNKNOWN";
+      const triggered = (data.policyResults || []).filter(
+        p => p.final_result && p.final_result.matched_flag
+      );
+
+      const violationLines = triggered.length
+        ? triggered.map(p => {
+            const f = p.final_result || {};
+            return `
+              <div style="display:flex; gap:10px; align-items:flex-start; margin-bottom:10px;">
+                <span style="font-size:16px; flex-shrink:0;">!</span>
+                <div>
+                  <span style="font-weight:800; font-size:14px; letter-spacing:.02em;">
+                    ${safe(p.policy_code)}
+                  </span>
+                  <span style="opacity:.75; font-size:13px; margin-left:8px;">
+                    ${safe(f.suggested_action)} &bull; ${safe(f.severity)}
+                  </span>
+                  <div style="margin-top:3px; font-size:14px; opacity:.92; line-height:1.5;">
+                    ${safe(f.moderator_reason_note)}
+                  </div>
+                </div>
+              </div>`;
+          }).join("")
+        : `<p style="opacity:.85; margin:0;">No policy violations detected.</p>`;
+
+      return `
+        <div class="outcome-hero ${outcome}" id="finalSection">
+          <div style="display:flex; align-items:baseline; gap:16px; margin-bottom:14px; flex-wrap:wrap;">
+            <h2 style="margin:0;">${safe(outcome)}</h2>
+            <span style="opacity:.85; font-size:15px;">
+              Risk: <strong>${safe(final.final_risk_level)}</strong>
+              &nbsp;&bull;&nbsp;
+              Action: <strong>${safe(final.final_suggested_action)}</strong>
+            </span>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.25); padding-top:14px;">
+            ${violationLines}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDecisionCards(final, data) {
+      const triggered = (data.policyResults || []).filter(
+        p => p.final_result && p.final_result.matched_flag
+      );
+
+      return `
+        <details class="panel decision-panel" open id="decisionSection">
+          <summary>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <h2>Final Moderation Decision</h2>
+              <span class="pill pill-purple">Run #${safe(data.runId)}</span>
+            </div>
+            <span class="collapse-hint">click to collapse ▲</span>
+          </summary>
+
+          <div style="margin-top:18px;">
+            <div class="summary-grid">
+              ${metric("Final Outcome", final.final_outcome)}
+              ${metric("Risk Level", final.final_risk_level)}
+              ${metric("Evidence Needed", final.request_evidence_flag ? "YES" : "NO")}
+              ${metric("Human Review", final.human_decision_required ? "YES" : "NO")}
+            </div>
+
+            <div style="margin-top:18px;">
+              <div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px;">
+                Violation Summary &mdash; ${triggered.length} of ${(data.policyResults || []).length}
+                polic${triggered.length === 1 ? "y" : "ies"} triggered
+              </div>
+              ${buildViolationSummary(triggered)}
+            </div>
+          </div>
+        </details>
+      `;
+    }
+
+    function buildViolationSummary(triggered) {
+      if (!triggered.length) {
+        return `<div class="empty">No policy violations detected. All policies passed.</div>`;
+      }
+      return `<div class="violation-list">` + triggered.map(p => {
+        const f   = p.final_result || {};
+        const sev = (f.severity || "LOW").toUpperCase();
+        const sevClass = (sev === "HIGH" || sev === "CRITICAL") ? "" :
+                          sev === "MEDIUM" ? "sev-medium" : "sev-low";
+        return `
+          <div class="violation-item ${sevClass}">
+            <div class="violation-header">
+              <span class="violation-code">! ${safe(p.policy_code)}</span>
+              <span class="pill ${actionPillClass(f.suggested_action)}">${safe(f.suggested_action)}</span>
+              <span class="pill ${severityPillClass(sev)}">${safe(sev)}</span>
+            </div>
+            <div class="violation-reason">${safe(f.moderator_reason_note)}</div>
+          </div>`;
+      }).join("") + `</div>`;
+    }
+
+    function actionPillClass(action) {
+      if (action === "PASS")               return "pill-green";
+      if (action === "REVIEW")             return "pill-blue";
+      if (action === "REQUEST_AMENDMENT")  return "pill-orange";
+      if (action === "ESCALATE" || action === "REJECT_RECOMMENDED") return "pill-red";
+      return "pill-gray";
+    }
+
+    function severityPillClass(sev) {
+      if (sev === "LOW")                       return "pill-green";
+      if (sev === "MEDIUM")                    return "pill-orange";
+      if (sev === "HIGH" || sev === "CRITICAL") return "pill-red";
+      return "pill-gray";
+    }
+
+    function renderPolicy(policy, index) {
+      const final      = policy.final_result || {};
+      const det        = final.details || {};
+      const claims     = det.claims || [];
+      const evidence   = det.evidence_issues || [];
+      const modules    = policy.modules || [];
+
+      const triggered  = final.matched_flag === true;
+      const panelClass = triggered ? "policy-triggered" : "policy-clean";
+      const icon       = triggered ? "! " : "✓ ";
+      const isOpen     = triggered ? "open" : "";
+
+      return `
+        <details class="panel policy-panel ${panelClass}" ${isOpen}
+                 id="${index === 0 ? "policySection" : ""}">
+          <summary>
+            <span class="chevron">&#9654;</span>
+            <div class="policy-summary-body">
+              <div class="policy-title-row">
+                <span class="policy-code-label">${icon}${safe(policy.policy_code)}</span>
+                <span class="pill ${actionPillClass(final.suggested_action)}">${safe(final.suggested_action || "PASS")}</span>
+                <span class="pill ${severityPillClass((final.severity || "").toUpperCase())}">${safe(final.severity || "LOW")}</span>
+                <span class="pill pill-gray">${safe(final.matched_rule_id || "DEFAULT")}</span>
+              </div>
+              <div class="policy-name-label">${safe(policy.policy_name)}</div>
+            </div>
+          </summary>
+
+          ${triggered ? `<p class="policy-decision-note"><strong>Decision:</strong> ${safe(final.moderator_reason_note)}</p>` : ""}
+
+          <details ${triggered ? "open" : ""}>
+            <summary>Detected Claims (${claims.length})</summary>
+            ${claims.length ? claims.map(renderClaim).join("") : `<div class="empty">No policy-relevant claims detected.</div>`}
+          </details>
+
+          <details ${triggered && evidence.length ? "open" : ""}>
+            <summary>Evidence Issues (${evidence.length})</summary>
+            ${evidence.length ? evidence.map(renderEvidence).join("") : `<div class="empty">No evidence issues detected.</div>`}
+          </details>
+
+          <details id="${index === 0 ? "moduleSection" : ""}">
+            <summary>Module Audit Trail (${modules.length})</summary>
+            ${modules.map(renderModule).join("")}
+          </details>
+
+          <details>
+            <summary>Dependency Gaps</summary>
+            ${(det.dependency_gaps || []).length
+              ? (det.dependency_gaps || []).map(g => `<p>⚠️ ${safe(g)}</p>`).join("")
+              : `<div class="empty">No dependency gaps recorded.</div>`}
+          </details>
+        </details>
+      `;
+    }
+
+    function renderClaim(c) {
+      const riskClass =
+        c.policy_risk_level === "HIGH" ? "pill-red" :
+        c.policy_risk_level === "MEDIUM" ? "pill-orange" :
+        c.policy_risk_level === "LOW" ? "pill-green" :
+        "pill-gray";
+
+      return `
+        <div class="claim-card">
+          <span class="pill pill-blue">${safe(c.field_name)}</span>
+          <span class="pill">Span ${safe(c.span_id)}</span>
+          <span class="pill ${riskClass}">${safe(c.policy_risk_level || "Risk pending")}</span>
+          <span class="pill pill-purple">${safe(c.claim_strength)}</span>
+
+          <div class="claim-text">“${safe(c.claim_text)}”</div>
+
+          <div>
+            ${(c.claim_types || []).map(t => `<span class="pill">${safe(t)}</span>`).join("")}
+          </div>
+
+          ${row("Why Evidence Required", c.why_evidence_required)}
+          ${row("Risk Reason", c.risk_reason)}
+          ${row("Temporal Nature", c.temporal_nature)}
+          ${row("Confidence", c.confidence_score)}
+        </div>
+      `;
+    }
+
+    function renderEvidence(e) {
+      return `
+        <div class="evidence-card">
+          <span class="pill pill-red">${safe(e.evidence_status)}</span>
+          <span class="pill pill-blue">${safe(e.field_name)}</span>
+
+          ${row("Claim", e.claim_excerpt)}
+          ${row("Evidence Scope", e.evidence_match_scope)}
+          ${row("URLs Near Claim", (e.urls_found_near_claim || []).join(", ") || "None")}
+          ${row("Evidence Terms", (e.evidence_reference_mentions || []).join(", ") || "None")}
+          ${row("Verification Note", e.verification_note)}
+        </div>
+      `;
+    }
+
+    function renderModule(m) {
+      const statusClass =
+        m.module_status === "SUCCESS" ? "pill-green" :
+        m.module_status === "FAILED" ? "pill-red" :
+        "pill-orange";
+
+      return `
+        <div class="module-row">
+          <strong>${safe(m.module_code)}</strong>
+          <div>
+            <strong>${safe(m.module_name)}</strong><br/>
+            <span class="muted">${safe(m.summary)}</span>
+          </div>
+          <span class="pill ${statusClass}">${safe(m.module_status)}</span>
+        </div>
+      `;
+    }
+
+    function renderRawJson(data) {
+      return `
+        <details class="panel">
+          <summary>Raw Full JSON</summary>
+          <pre>${safe(JSON.stringify(data, null, 2))}</pre>
+        </details>
+      `;
+    }
+
+    function metric(label, value) {
+      return `
+        <div class="metric-card">
+          <div class="metric-label">${safe(label)}</div>
+          <div class="metric-value">${safe(value || "-")}</div>
+        </div>
+      `;
+    }
+
+    function row(label, value) {
+      return `
+        <div class="field-row">
+          <div class="field-key">${safe(label)}</div>
+          <div class="field-value">${safe(value || "-")}</div>
+        </div>
+      `;
+    }
+
+    function scrollToSection(id) {
+      const section = document.getElementById(id);
+      if (section) {
+        section.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }
+    }
+
+    function safe(value) {
+      if (value === null || value === undefined) return "";
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    // ── Moderation history ────────────────────────────────────────────────
+    async function loadHistory() {
+      document.getElementById("historyContent").innerHTML =
+        `<div class="panel loader">Loading history...</div>`;
+      try {
+        const res  = await fetch(`${API_BASE}/history?limit=200`);
+        const runs = await res.json();
+        document.getElementById("historyContent").innerHTML = renderHistory(runs);
+      } catch (err) {
+        document.getElementById("historyContent").innerHTML =
+          `<div class="panel"><span class="pill pill-red">Error</span> <p>${safe(err.message)}</p></div>`;
+      }
+    }
+
+    function renderHistory(runs) {
+      if (!runs.length) {
+        return `<div class="panel"><div class="empty">No moderation runs found.</div></div>`;
+      }
+
+      const rows = runs.map(r => {
+        const outcome  = r.FinalOutcome        || "—";
+        const risk     = r.FinalRiskLevel       || "—";
+        const action   = r.FinalSuggestedAction || "—";
+        const humanRev = r.HumanDecisionRequired ? "YES" : "NO";
+        const date     = r.StartedAt ? r.StartedAt.replace("T", " ").slice(0, 16) : "—";
+
+        return `
+          <tr class="history-row" onclick="toggleRunDetail(${r.RunId})">
+            <td>
+              <div style="font-weight:700;">${safe(r.RunId)}</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis;">${safe(r.PolicyCode || "—")}</div>
+            </td>
+            <td>
+              <div style="font-weight:700;">${safe(r.ProjectName || "—")}</div>
+              <div style="font-size:12px; color:var(--muted);">ID ${safe(r.ProjectId)}</div>
+            </td>
+            <td style="font-size:13px;">${safe(date)}</td>
+            <td><span class="pill ${actionPillClass(outcome)}">${safe(outcome)}</span></td>
+            <td><span class="pill ${severityPillClass((risk).toUpperCase())}">${safe(risk)}</span></td>
+            <td><span class="pill ${actionPillClass(action)}">${safe(action)}</span></td>
+            <td style="text-align:center;">
+              <span class="pill ${humanRev === 'YES' ? 'pill-orange' : 'pill-green'}">${humanRev}</span>
+            </td>
+            <td class="history-chevron" id="run-chevron-${r.RunId}">&#9654;</td>
+          </tr>
+          <tr class="history-detail-row" id="run-detail-${r.RunId}" style="display:none;">
+            <td colspan="8">
+              <div class="history-detail-content" id="run-detail-content-${r.RunId}"></div>
+            </td>
+          </tr>`;
+      }).join("");
+
+      return `
+        <div class="panel" style="overflow:hidden; padding:0;">
+          <table class="history-table">
+            <colgroup>
+              <col style="width:72px">
+              <col>
+              <col style="width:128px">
+              <col style="width:100px">
+              <col style="width:82px">
+              <col style="width:128px">
+              <col style="width:82px">
+              <col style="width:32px">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Run</th>
+                <th>Project</th>
+                <th>Date (UTC)</th>
+                <th>Outcome</th>
+                <th>Risk</th>
+                <th>Action</th>
+                <th>Review</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
+    async function toggleRunDetail(runId) {
+      const detailRow = document.getElementById(`run-detail-${runId}`);
+      const chevron   = document.getElementById(`run-chevron-${runId}`);
+      const contentEl = document.getElementById(`run-detail-content-${runId}`);
+      const isOpen    = detailRow.style.display !== "none";
+
+      if (isOpen) {
+        detailRow.style.display = "none";
+        chevron.innerHTML = "&#9654;";
+        return;
+      }
+
+      detailRow.style.display = "";
+      chevron.innerHTML = "&#9660;";
+
+      // Only fetch once; subsequent opens reuse cached content
+      if (contentEl.dataset.loaded) return;
+      contentEl.dataset.loaded = "1";
+      contentEl.innerHTML = `<div class="loader" style="padding:8px 0;">Loading policy results...</div>`;
+
+      try {
+        const res      = await fetch(`${API_BASE}/history/${runId}/policies`);
+        const policies = await res.json();
+        const triggered = policies.filter(
+          p => p.SuggestedAction && p.SuggestedAction !== "PASS"
+        );
+
+        if (!triggered.length) {
+          contentEl.innerHTML = `<div class="empty">All policies passed — no violations detected.</div>`;
+          return;
+        }
+
+        contentEl.innerHTML = triggered.map(p => {
+          const sev      = (p.RiskLevel || "LOW").toUpperCase();
+          const sevClass = (sev === "HIGH" || sev === "CRITICAL") ? ""
+                         : sev === "MEDIUM" ? "sev-medium" : "sev-low";
+          return `
+            <div class="violation-item ${sevClass}" style="margin-bottom:10px;">
+              <div class="violation-header">
+                <span class="violation-code">! ${safe(p.PolicyCode)}</span>
+                <span style="font-size:13px; color:var(--muted);">${safe(p.PolicyName)}</span>
+                <span class="pill ${actionPillClass(p.SuggestedAction)}">${safe(p.SuggestedAction)}</span>
+                <span class="pill ${severityPillClass(sev)}">${safe(sev)}</span>
+              </div>
+              <div class="violation-reason">${safe(p.Summary || "No detail available.")}</div>
+            </div>`;
+        }).join("");
+
+      } catch (err) {
+        contentEl.dataset.loaded = "";
+        contentEl.innerHTML = `<div class="empty" style="color:var(--red);">Error: ${safe(err.message)}</div>`;
+      }
+    }
+
+    loadProjects();
+  </script>
+</body>
+</html>

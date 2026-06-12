@@ -1,0 +1,9 @@
+azure-functions
+fastapi
+uvicorn
+pyodbc
+python-dotenv
+openai
+langdetect
+httpcore
+httpx
